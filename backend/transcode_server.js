@@ -1,7 +1,6 @@
 const express = require('express');
 require('dotenv').config();
 const app = express();
-const PORT = process.env.PORT || 3005;
 const AWS = require('aws-sdk');
 const mongoose = require('mongoose');
 const kafka = require('kafka-node');
@@ -42,7 +41,7 @@ const s3 = new AWS.S3({
 });
 
 
-mongoose.connect('process.env.MONGO_URL')
+mongoose.connect('mongodb://host.docker.internal:27017/cloudtube')
 .then(() => console.log('Connected!'));
 
 const ffmpeg = require('fluent-ffmpeg');
@@ -253,6 +252,7 @@ const transcode = async (fileName) => {
     return (videoBase[resolution] + audioBase) * 1000; // Return in bits per second
   }
 
+const PORT = 3006;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
