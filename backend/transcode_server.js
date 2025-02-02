@@ -186,7 +186,7 @@ const transcode = async (fileName) => {
             `-b:a ${resolution.audioBitrate}`, // Set audio bitrate
             '-c:a aac',                   // Use AAC audio codec
             '-start_number 0',            // Start HLS segment numbering from 0
-            '-hls_time 10',               // Set HLS segment duration to 10 seconds
+            '-hls_time 2',               // Set HLS segment duration to 10 seconds
             '-hls_list_size 0',           // Include all segments in the playlist
             '-f hls'                      // Output format is HLS
           ])

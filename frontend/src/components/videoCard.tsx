@@ -20,14 +20,15 @@ const VideoCard: React.FC<VideoCardProps> = ({ url, title }) => {
   useEffect(() => {
     if (Hls.isSupported() && videoRef.current) {
       const hls = new Hls({
+        maxLoadingDelay: 2,
         autoStartLoad: true,
         capLevelToPlayerSize: false, // Disable automatic size adjustment
       });
       hlsRef.current = hls;
-
+  
       hls.loadSource(url);
       hls.attachMedia(videoRef.current);
-
+  
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setLevels(hls.levels.map(level => ({
           height: level.height,
@@ -35,14 +36,31 @@ const VideoCard: React.FC<VideoCardProps> = ({ url, title }) => {
           bitrate: level.bitrate
         })));
       });
-
+  
       hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
         setCurrentQuality(`${hls.levels[data.level]?.height}p`);
+        console.log("level switch", data.level);
+      });
+  
+      // Detect bandwidth issues and reduce quality automatically
+      hls.on(Hls.Events.FRAG_LOAD_EMERGENCY_ABORTED, () => {
+        hls.nextLevel = Math.max(hls.currentLevel - 1, 0);
+        console.log("FRAG_LOAD_EMERGENCY_ABORTED", hls.nextLevel); // Reduce quality
+      });
+  
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          hls.nextLevel = Math.max(hls.currentLevel - 1, 0);
+          console.log("Lower quality",hls.nextLevel); // Lower quality on network errors
+        }
       });
 
+  
+  
       return () => hls.destroy();
     }
   }, [url]);
+  
 
   const handleQualityChange = (quality: string) => {
     if (!hlsRef.current) return;
