@@ -1,31 +1,120 @@
+# version: "3.8"
+
+# services:
+#   kafka:
+#     image: apache/kafka:3.8.0
+#     container_name: kafka
+#     ports:
+#       - "9092:9092"
+#     environment:
+#       KAFKA_NODE_ID: 1
+#       KAFKA_PROCESS_ROLES: broker,controller
+#       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+#       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+#       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+#       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+#       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+#       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#       KAFKA_MESSAGE_MAX_BYTES: 1048576000
+#       KAFKA_REPLICA_FETCH_MAX_BYTES: 1048576000
+#       KAFKA_FETCH_MESSAGE_MAX_BYTES: 1048576000
+#       KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+#       KAFKA_BROKER: kafka:9092
+#     networks:
+#       - kafka-net
+#     volumes:
+#       - /tmp/broker-metadata
+
+#   # Add any other services you need like your server1, server2, etc.
+#   server1:
+#     container_name: s3-upload-server
+#     image: node:latest
+#     working_dir: /backend
+#     volumes:
+#       - .:/backend
+#     ports:
+#       - "3005:3005"
+#     command: "node S3_server.js"
+#     networks:
+#       - kafka-net
+#     depends_on:
+#       - kafka
+
+#   server2:
+#     container_name: transcoding-server
+#     image: node:latest
+#     working_dir: /backend
+#     volumes:
+#       - .:/backend
+#     ports:
+#       - "3006:3006"
+#     command: bash -c "npm install && node transcode_server.js"
+#     networks:
+#       - kafka-net
+#     depends_on:
+#       - kafka
+
+#   server3:
+#     container_name: node-server
+#     image: node:latest
+#     working_dir: /backend
+#     volumes:
+#       - .:/backend
+#     ports:
+#       - "5007:5007"
+#     command: bash -c "npm install && node server.js"
+#     networks:
+#       - kafka-net
+
+#   kafka-ui:
+#     image: provectuslabs/kafka-ui:latest
+#     environment:
+#       KAFKA_CLUSTERS_0_NAME: "local-kafka"
+#       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+#     ports:
+#       - "8081:8080"
+#     networks:
+#       - kafka-net
+#     depends_on:
+#       - kafka
+
+# networks:
+#   kafka-net:
+#     driver: bridge
+
+
+
+
 version: "3.8"
 
 services:
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    networks:
+      - kafka-net
+
   kafka:
-    image: apache/kafka:3.8.0
+    image: bitnami/kafka:latest
     container_name: kafka
     ports:
       - "9092:9092"
     environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_MESSAGE_MAX_BYTES: 1048576000
-      KAFKA_REPLICA_FETCH_MAX_BYTES: 1048576000
-      KAFKA_FETCH_MESSAGE_MAX_BYTES: 1048576000
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
-      KAFKA_BROKER: kafka:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    depends_on:
+      - zookeeper
     networks:
       - kafka-net
-    volumes:
-      - /tmp/broker-metadata
 
-  # Add any other services you need like your server1, server2, etc.
   server1:
     container_name: s3-upload-server
     image: node:latest

@@ -40,3 +40,28 @@
 .read-the-docs {
   color: #888;
 }
+
+
+.navbar{
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+}
+
+.navbar_left{
+ margin-right: auto;
+}
+
+.external-icon{
+  height:36.5px;
+  width: 90px;
+}
+
+.card{
+  margin:10px;
+  height: 50px;
+}
+
+.dashboard{
+  display: flex;
+}

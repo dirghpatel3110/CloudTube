@@ -2,7 +2,7 @@ const kafka = require('kafka-node');
 const { KafkaClient, Producer } = kafka;
 
 // Configuration options
-const kafkaHost = process.env.KAFKA_HOST || 'localhost:9092'; // Default to localhost if not specified
+const kafkaHost = 'kafka:9092'; // Default to localhost if not specified
 
 // Create a Kafka client
 const client = new KafkaClient({ kafkaHost });

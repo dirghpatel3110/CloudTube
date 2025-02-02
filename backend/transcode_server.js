@@ -7,7 +7,7 @@ const kafka = require('kafka-node');
 const { KafkaClient, Consumer } = kafka;
 
 const kafkaConsumer = () => {
-  const client = new KafkaClient({ kafkaHost: 'localhost:9092' });
+  const client = new KafkaClient({ kafkaHost: 'kafka:9092' });
   const consumer = new Consumer(
     client,
     [{ topic: 'transcode', partition: 0 }],
