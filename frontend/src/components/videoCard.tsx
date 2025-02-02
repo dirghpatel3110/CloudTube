@@ -1,6 +1,5 @@
-import { Card, CardContent, CardMedia } from "@mui/material";
-import React from "react";
-import ReactPlayer from "react-player";
+import { Card, CardContent, CardMedia, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
 
 interface VideoCardProps {
@@ -9,34 +8,82 @@ interface VideoCardProps {
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({ url, title }) => {
-  const isHls = url.endsWith(".m3u8");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
+  const [levels, setLevels] = useState<Array<{ 
+    height: number; 
+    width: number; 
+    bitrate: number 
+  }>>([]);
+  const [currentQuality, setCurrentQuality] = useState<string>("auto");
+
+  useEffect(() => {
+    if (Hls.isSupported() && videoRef.current) {
+      const hls = new Hls({
+        autoStartLoad: true,
+        capLevelToPlayerSize: false, // Disable automatic size adjustment
+      });
+      hlsRef.current = hls;
+
+      hls.loadSource(url);
+      hls.attachMedia(videoRef.current);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setLevels(hls.levels.map(level => ({
+          height: level.height,
+          width: level.width,
+          bitrate: level.bitrate
+        })));
+      });
+
+      hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
+        setCurrentQuality(`${hls.levels[data.level]?.height}p`);
+      });
+
+      return () => hls.destroy();
+    }
+  }, [url]);
+
+  const handleQualityChange = (quality: string) => {
+    if (!hlsRef.current) return;
+    
+    if (quality === "auto") {
+      hlsRef.current.currentLevel = -1; // Enable auto-quality
+    } else {
+      const level = levels.findIndex(l => `${l.height}p` === quality);
+      hlsRef.current.currentLevel = level;
+    }
+  };
 
   return (
-    <div className="card">
-      <Card sx={{ minWidth: 275 }}>
-        <CardMedia>
-          {isHls ? (
-            // Use a custom video player for HLS streams
-            <video
-              controls
-              style={{ width: "100%" }}
-              crossOrigin="anonymous"
-              ref={(videoElement) => {
-                if (videoElement && Hls.isSupported()) {
-                  const hls = new Hls();
-                  hls.loadSource(url);
-                  hls.attachMedia(videoElement);
-                }
-              }}
-            />
-          ) : (
-            // Use ReactPlayer for other video formats
-            <ReactPlayer controls url={url} width="100%" height="100%" />
-          )}
-        </CardMedia>
-        <CardContent>{title}</CardContent>
-      </Card>
-    </div>
+    <Card sx={{ width: 800, height: 450 }}> {/* Fixed dimensions */}
+      <CardMedia>
+        <video
+          ref={videoRef}
+          controls
+          style={{ 
+            width: "100%", 
+            height: "100%",
+            objectFit: "contain" // Maintain aspect ratio
+          }}
+        />
+        <FormControl sx={{ position: "absolute", top: 8, right: 8 }}>
+          <Select
+            value={currentQuality}
+            onChange={(e) => handleQualityChange(e.target.value)}
+            size="small"
+          >
+            <MenuItem value="auto">Auto ({currentQuality})</MenuItem>
+            {levels.map((level, idx) => (
+              <MenuItem key={idx} value={`${level.height}p`}>
+                {level.height}p ({Math.round(level.bitrate/1000)}kbps)
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </CardMedia>
+      <CardContent>{title}</CardContent>
+    </Card>
   );
 };
 
