@@ -120,11 +120,19 @@ app.post('/completeUpload/:fileName/:uploadId', async (req, res) => {
   });
 });
 
-// Kafka demo endpoint
+// Kafka Demo Endpoint
+app.use(bodyParser.json());
 app.post('/kafkademo', (req, res) => {
+  console.log("📥 Incoming request body:", req.body);
+
+  if (!req.body.fileName) {
+      return res.status(400).json({ error: "Missing 'fileName' in request body" });
+  }
+
   const messageData = { fileName: req.body.fileName, status: 'Processed' };
   sendMessage('transcode', messageData);
-  res.sendStatus(201);
+
+  res.status(201).json({ message: "Message sent to Kafka", data: messageData });
 });
 
 // Start the server

@@ -2,7 +2,7 @@ const kafka = require('kafka-node');
 const { KafkaClient, Producer } = kafka;
 
 // Configuration options
-const kafkaHost = 'kafka:9092'; // Default to localhost if not specified
+const kafkaHost = 'kafka:9092'; // Change this if needed
 
 // Create a Kafka client
 const client = new KafkaClient({ kafkaHost });
@@ -11,11 +11,11 @@ const client = new KafkaClient({ kafkaHost });
 const producer = new Producer(client);
 
 producer.on('ready', () => {
-    console.log('Kafka Producer is connected and ready.');
+    console.log(' Kafka Producer is connected and ready.');
 });
 
 producer.on('error', (error) => {
-    console.error('Producer encountered an error:', error);
+    console.error(' Producer encountered an error:', error);
 });
 
 /**
@@ -24,22 +24,29 @@ producer.on('error', (error) => {
  * @param {Object} message - The message to send
  */
 function sendMessage(topic, message) {
-    const payloads = [
-        {
-            topic: topic,
-            messages: JSON.stringify(message)
-        }
-    ];
+    try {
+        const formattedMessage = JSON.stringify(message);
 
-    producer.send(payloads, (error, data) => {
-        if (error) {
-            console.error('Failed to send message:', error);
-            return;
-        }
-        console.log('Message sent:', data);
-    });
+        const payloads = [
+            {
+                topic: topic,
+                messages: formattedMessage
+            }
+        ];
+
+        console.log("📤 Payload being sent:", payloads);
+
+        producer.send(payloads, (error, data) => {
+            if (error) {
+                console.error(' Failed to send message:', error);
+                return;
+            }
+            console.log(' Message sent successfully:', data);
+        });
+    } catch (err) {
+        console.error(" Error in sendMessage function:", err);
+    }
 }
-
 
 module.exports = {
     sendMessage
